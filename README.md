@@ -4,7 +4,7 @@ Starter project for **Advanced Development** (Thomas More – International Expe
 
 A small but complete web app: students browse campus events and register for them.
 
-- **api/** : REST API: Node.js, Express 5, Sequelize + SQLite, Zod
+- **api/** : REST API: Node.js, Express 5, Sequelize + SQLite (Postgres in production), Zod
 - **web/** : frontend: Vue 3, Vue Router, Vite
 
 It works out of the box, and it has tests. It is also the kind of code you will meet in your first job:
@@ -118,8 +118,10 @@ There is no authentication: anyone who knows the URL can register people, just l
 One web service serves the API and the built frontend on one URL (`npm run build`, then `npm start`).
 `render.yaml` is a ready Render Blueprint: Render dashboard → New → Blueprint → pick your repo.
 Set `SMTP_URL` and `MAIL_FROM` there if you want real mails. Check it with `GET /api/health`.
-The free tier has no persistent disk: the SQLite file resets when the service restarts or redeploys, and
-the demo data is added again on the next start.
+The free tier has no persistent disk, so production uses Postgres instead of the SQLite file: `render.yaml`
+also creates a free Postgres database and passes its connection string to the app as `DATABASE_URL`.
+Events and registrations now survive restarts and deploys. Without `DATABASE_URL` (development, tests)
+the app keeps using SQLite. Note: Render's free Postgres expires 30 days after it is created.
 
 The integration tests in `api/tests/integration` only talk HTTP. They pass before your refactoring,
 and they must still pass after it, without changing them.

@@ -1,5 +1,10 @@
 # Render Blueprint: one web service that serves the API and the built frontend on one URL.
 # Deploy: Render dashboard -> New -> Blueprint -> pick your GitHub repo.
+# A free Postgres database, so events and registrations survive restarts and deploys.
+databases:
+  - name: campus-events-db
+    plan: free
+
 services:
   - type: web
     name: campus-events
@@ -14,6 +19,11 @@ services:
         value: 22.12.0
       - key: NODE_ENV
         value: production
+      # Render fills this in with the connection string of the database above.
+      - key: DATABASE_URL
+        fromDatabase:
+          name: campus-events-db
+          property: connectionString
       # Optional: without SMTP_URL confirmation mails are only logged. Set it in the Render dashboard.
       - key: SMTP_URL
         sync: false

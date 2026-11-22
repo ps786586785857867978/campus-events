@@ -26,6 +26,9 @@ export const config = Object.freeze({
   port: toInt(env.PORT, 3000),
   logLevel: env.LOG_LEVEL || 'info',
   silentLogs: env.NODE_ENV === 'test',
+  // Production: a Postgres connection string (Render sets it, see render.yaml), so data survives restarts.
+  // Empty: a local SQLite file (development) or :memory: (tests, via .env.test).
+  databaseUrl: env.DATABASE_URL || '',
   dbStorage: env.DB_STORAGE || './data/events.sqlite',
 
   // In production one process serves the API and the built frontend (web/dist), so one URL is enough.
