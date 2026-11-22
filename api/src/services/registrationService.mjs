@@ -15,14 +15,9 @@ async function requireEvent(eventId) {
   return event;
 }
 
-async function assertCanRegister(event, email) {
+async function assertNotRegistered(event, email) {
   if (await registrationRepository.findByEventAndEmail(event.id, email)) {
     throw conflict(`${email} is already registered for this event`);
-  }
-  // Same rule as before the refactoring (`>`, so one extra person fits). Kept on purpose: a
-  // refactoring must not change behaviour. Probably meant `>=`; that is a separate fix with its own test.
-  if ((await registrationRepository.countByEvent(event.id)) > event.capacity) {
-    throw conflict('Event is full');
   }
 }
 
@@ -36,14 +31,17 @@ export const registrationService = {
 
   async register(eventId, { name, email }) {
     const event = await requireEvent(eventId);
-    await assertCanRegister(event, email);
+    await assertNotRegistered(event, email);
 
     // Registration + mail job are stored together. Whatever happens to the mail provider
-    // from here on, the registration is safe.
-    const registration = await registrationRepository.createWithMailJob(
+    // from here on, the registration is safe. The seat check happens inside that same save,
+    // so the last seat can never go to two people.
+    const registration = await registrationRepository.createIfSeatLeft(
       { eventId, name, email },
-      buildConfirmationMail(event, { name, email })
+      buildConfirmationMail(event, { name, email }),
+      event.capacity
     );
+    if (!registration) throw conflict('Event is full');
     logger.info('new registration', { event: event.title, name, email });
 
     cache.invalidate([cacheKeys.event(eventId), cacheKeys.registrations(eventId), cacheKeys.stats]);
